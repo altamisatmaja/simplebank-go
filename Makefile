@@ -8,5 +8,7 @@ migratedown:
 	migrate -path db/migration -database "postgresql://root:root@localhost:5432/simplebank?sslmode=disable" -verbose down
 dropdb:
 	docker exec -it postgres12 dropdb simplebank
+sqlc:
+	sqlc generate
 
 .PHONY: postgres createdb dropdb migrateup migratedown
