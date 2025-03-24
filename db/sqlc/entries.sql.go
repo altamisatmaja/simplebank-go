@@ -15,7 +15,7 @@ INSERT INTO entries (
   amount
 ) VALUES (
   $1, $2
-) RETURNING id, account_id, amount
+) RETURNING id, account_id, amount, created_at
 `
 
 type CreateEntryParams struct {
@@ -26,24 +26,34 @@ type CreateEntryParams struct {
 func (q *Queries) CreateEntry(ctx context.Context, arg CreateEntryParams) (Entries, error) {
 	row := q.db.QueryRowContext(ctx, createEntry, arg.AccountID, arg.Amount)
 	var i Entries
-	err := row.Scan(&i.ID, &i.AccountID, &i.Amount)
+	err := row.Scan(
+		&i.ID,
+		&i.AccountID,
+		&i.Amount,
+		&i.CreatedAt,
+	)
 	return i, err
 }
 
 const getEntry = `-- name: GetEntry :one
-SELECT id, account_id, amount FROM entries
+SELECT id, account_id, amount, created_at FROM entries
 WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetEntry(ctx context.Context, id int64) (Entries, error) {
 	row := q.db.QueryRowContext(ctx, getEntry, id)
 	var i Entries
-	err := row.Scan(&i.ID, &i.AccountID, &i.Amount)
+	err := row.Scan(
+		&i.ID,
+		&i.AccountID,
+		&i.Amount,
+		&i.CreatedAt,
+	)
 	return i, err
 }
 
 const listEntries = `-- name: ListEntries :many
-SELECT id, account_id, amount FROM entries
+SELECT id, account_id, amount, created_at FROM entries
 WHERE account_id = $1
 ORDER BY id
 LIMIT $2
@@ -65,7 +75,12 @@ func (q *Queries) ListEntries(ctx context.Context, arg ListEntriesParams) ([]Ent
 	var items []Entries
 	for rows.Next() {
 		var i Entries
-		if err := rows.Scan(&i.ID, &i.AccountID, &i.Amount); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.AccountID,
+			&i.Amount,
+			&i.CreatedAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
