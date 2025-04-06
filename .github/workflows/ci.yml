@@ -39,13 +39,9 @@ jobs:
           version="v4.15.2"
           os="linux"
           arch="amd64"
-
-          curl -L https://github.com/golang-migrate/migrate/releases/download/${version}/migrate.${os}-${arch}.tar.gz -o migrate.tar.gz
-          tar -xvzf migrate.tar.gz
-          sudo mv migrate.${os}-${arch} /usr/bin/migrate
+          curl -L https://github.com/golang-migrate/migrate/releases/download/$version/migrate.$os-$arch.tar.gz | tar xvz
+          sudo mv migrate.linux-amd64 /usr/bin/migrate
           which migrate
-          migrate -version
-
 
       - name: Run migration
         run: make migrateup
