@@ -20,7 +20,7 @@ jobs:
           POSTGRES_USER: root
           POSTGRES_PASSWORD: root
           POSTGRES_DB: simplebank
-        port:
+        ports:
           - 5432:5432
         options: >-
           --health-cmd pg_isready
