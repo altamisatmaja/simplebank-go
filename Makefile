@@ -16,5 +16,7 @@ server:
 	go run main.go
 mock:
 	mockgen -package mockdb  -destination db/mock/store.go github.com/altamisatmaja/simplebank-go/db/sqlc Store
+seed:
+	docker exec -i postgres12 psql -U root -d simplebank < db/seed/seeder.sql
 
 .PHONY: postgres createdb dropdb migrateup migratedown test mock
