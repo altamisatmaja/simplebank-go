@@ -2,12 +2,28 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 	"net/http"
 
 	db "github.com/altamisatmaja/simplebank-go/db/sqlc"
+	"github.com/altamisatmaja/simplebank-go/token"
 	"github.com/gin-gonic/gin"
 	"github.com/lib/pq"
 )
+
+const listAccounts = `-- name:ListAccounts :many
+SELECT id, owner, baalnce, currencry, created_at FROM accounts
+WHERE owner = $1
+ORDER BY id
+LIMIT $2
+OFFSET $3
+`
+
+type ListAccountParams struct {
+	Owner  string `json:"owner"`
+	Limit  int32  `json:"limit`
+	Offset int32  `json:"offset"`
+}
 
 type createAccountRequest struct {
 	Owner    string `json:"owner" binding:"required"`
@@ -21,8 +37,10 @@ func (server *Server) createAccount(ctx *gin.Context) {
 		return
 	}
 
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+
 	arg := db.CreateAccountParams{
-		Owner:    req.Owner,
+		Owner:    authPayload.Username,
 		Currency: req.Currency,
 		Balance:  0,
 	}
@@ -66,6 +84,12 @@ func (server *Server) getAccount(ctx *gin.Context) {
 		return
 	}
 	// account := db.Accounts{}
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	if account.Owner != authPayload.Username {
+		err := errors.New("account doesnt belong to the authenticated user")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
 
 	ctx.JSON(http.StatusOK, account)
 }

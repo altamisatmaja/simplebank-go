@@ -12,7 +12,9 @@ import (
 
 	mockdb "github.com/altamisatmaja/simplebank-go/db/mock"
 	db "github.com/altamisatmaja/simplebank-go/db/sqlc"
+	"github.com/altamisatmaja/simplebank-go/token"
 	"github.com/altamisatmaja/simplebank-go/util"
+	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
@@ -90,7 +92,7 @@ func TestGetAccountAPI(t *testing.T) {
 			tc.buildStubs(store)
 
 			// start server and send req
-			server := NewServer(store)
+			server := newTestServer(t, store)
 			recorder := httptest.NewRecorder()
 
 			url := fmt.Sprintf("/accounts/%d", tc.accountID)
@@ -120,4 +122,27 @@ func requireBodyMatchAccount(t *testing.T, body *bytes.Buffer, account db.Accoun
 	err = json.Unmarshal(data, &gotAccount)
 	require.NoError(t, err)
 	require.Equal(t, account, gotAccount)
+}
+
+func (server *Server) TestListAccountsAPI(ctx *gin.Context) {
+	var req listAccountRequest
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	arg := db.ListAccountsParams{
+		Owner:  authPayload.Username,
+		Limit:  req.PageSze,
+		Offset: (req.PageID - 1) * req.PageSze,
+	}
+
+	accounts, err := server.store.ListAccounts(ctx, arg)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, accounts)
 }
