@@ -43,7 +43,6 @@ func (server *Server) setupRouter() {
 
 	authRoutes.POST("/accounts", server.createAccount)
 	authRoutes.GET("/accounts/:id", server.getAccount)
-	authRoutes.GET("/accounts", server.listAccount)
 
 	authRoutes.POST("/transfers", server.createTransfer)
 
